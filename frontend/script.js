@@ -1,4 +1,7 @@
-let board = [
+
+    
+
+  let board = [
     "", "", "",
     "", "", "",
     "", "", ""
@@ -20,12 +23,10 @@ function draw() {
         let cell = document.createElement("button");
 
         cell.className = "cell";
-
         cell.innerHTML = value;
 
-        cell.onclick = function () {
+        cell.onclick = async function () {
 
-            // Stop if game is over or cell is already filled
             if (gameOver || board[index] !== "") {
                 return;
             }
@@ -34,62 +35,59 @@ function draw() {
 
             draw();
 
-            checkWinner();
+            const winner = await checkWinner();
 
-            if (!gameOver) {
-                player = player === "X" ? "O" : "X";
-                turn.innerHTML = `Player ${player}'s Turn`;
+            if (winner) {
+
+                gameOver = true;
+
+                if (winner === "Draw") {
+                    result.innerHTML = "It's a Draw!";
+                } else {
+                    result.innerHTML = `Winner: ${winner}`;
+                }
+
+                turn.innerHTML = "Game Over";
+
+                return;
             }
 
+            player = player === "X" ? "O" : "X";
+
+            turn.innerHTML = `Player ${player}'s Turn`;
         };
 
         boardDiv.appendChild(cell);
-
     });
-
 }
 
-function checkWinner() {
+async function checkWinner() {
 
-    // fetch("http://65.2.33.80:5000/move", {
-    fetch("/api/move", {
+    try {
 
-        method: "POST",
+        const response = await fetch("/api/move", {
 
-        headers: {
-            "Content-Type": "application/json"
-        },
+            method: "POST",
 
-        body: JSON.stringify({
-            board: board
-        })
+            headers: {
+                "Content-Type": "application/json"
+            },
 
-    })
+            body: JSON.stringify({
+                board: board
+            })
+        });
 
-    .then(response => response.json())
+        const data = await response.json();
 
-    .then(data => {
+        return data.winner;
 
-        if (data.winner) {
+    } catch (error) {
 
-            gameOver = true;
+        console.error("API Error:", error);
 
-            if (data.winner === "Draw") {
-
-                result.innerHTML = "?? It's a Draw!";
-
-            } else {
-
-                result.innerHTML = `?? Winner: ${data.winner}`;
-
-            }
-
-            turn.innerHTML = "Game Over";
-
-        }
-
-    });
-
+        return null;
+    }
 }
 
 function restart() {
@@ -101,15 +99,12 @@ function restart() {
     ];
 
     player = "X";
-
     gameOver = false;
 
     result.innerHTML = "";
-
     turn.innerHTML = "Player X's Turn";
 
     draw();
-
 }
 
 draw();
