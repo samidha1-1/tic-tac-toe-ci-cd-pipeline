@@ -1,25 +1,41 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: tic-tac-toe-ingress
+  name: tic-tac-toe-backend-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
 spec:
+  ingressClassName: nginx
   rules:
   - host: samidhawani.in
     http:
       paths:
-      - pathType: Prefix
-        path: /
-        backend:
-          service:
-            name: frontend-service
-            port:
-              number: 8081
-    
-      - paths:
-        pathType: Prefix
-        path: /api
+      - path: /api(/|$)(.*)
+        pathType: ImplementationSpecific
         backend:
           service:
             name: backend-service
             port:
-              number: 5000
+              number: 80
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tic-tac-toe-frontend-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: samidhawani.in
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
+
